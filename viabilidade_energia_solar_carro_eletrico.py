@@ -6,10 +6,11 @@ import numpy as np
 # -----------------------------
 # Configuração inicial
 # -----------------------------
-st.set_page_config(page_title="Simulador Veículo elétrico + Solar", layout="wide")
+# título da aba do navegador
+st.set_page_config(page_title="Simulador veículo elétrico + Energia Solar", layout="wide")
 
-st.title("🚗⚡ Simulador EV + Solar")
-st.write("Compare custos de um veículo a combustão (ICE) com veículo elétrico (EV) com ou sem energia solar, considerando financiamento, O&M e inflação.")
+st.title("🚗⚡ Simulador Veículo Elétrico + Energia Solar")
+st.write("Compare custos de um veículo a gasolina (VG) com veículo elétrico (VE) com ou sem energia solar, considerando financiamento, O&M e inflação.")
 
 # -----------------------------
 # Entradas do usuário
@@ -18,18 +19,26 @@ st.sidebar.header("Parâmetros de Entrada — Uso e Preços Atuais")
 
 km_mes = st.sidebar.slider("Km rodados por mês", 500, 5000, 1300, 100)
 preco_gasolina = st.sidebar.slider("Preço da gasolina hoje (R$/L)", 4.0, 10.0, 6.4, 0.1)
-consumo_ICE = st.sidebar.slider("Consumo ICE (km/L)", 5.0, 20.0, 12.0, 0.5)
+consumo_ICE = st.sidebar.slider("Consumo veículo a gasolina (km/L)", 5.0, 20.0, 12.0, 0.5)
 
-eficiencia_EV = st.sidebar.slider("Eficiência EV (km/kWh)", 3.0, 10.0, 6.0, 0.1)
+eficiencia_EV = st.sidebar.slider("Eficiência veículo elétrico (km/kWh)", 3.0, 10.0, 6.0, 0.1)
 perdas_pct = st.sidebar.slider("Perdas de carga (%)", 0, 30, 10, 1)
 tarifa_kWh = st.sidebar.slider("Tarifa de energia hoje (R$/kWh)", 0.5, 2.0, 1.0, 0.05)
 producao_kWh_kWp_ano = st.sidebar.slider("Produção anual (kWh/kWp)", 1000, 2000, 1379, 10)
 
-usar_solar = st.sidebar.checkbox("Usar energia solar para o EV", True)
+usar_solar = st.sidebar.checkbox("Usar energia solar para o VE", True)
 
 st.sidebar.header("Parâmetros Econômicos")
-inflacao_pct = st.sidebar.slider("Inflação (a.a.) [%]", 0.0, 20.0, 5.0, 0.1)
-juros_fin_pct = st.sidebar.slider("Juros financiamento solar (a.a.) [%]", 0.0, 30.0, 15.0, 0.1)
+
+st.sidebar.header("Financiamento do veículo elétrico")
+CAPEX_EV = st.sidebar.number_input("Preço do veículo elétrico (R$)", min_value=0.0, value=120000.0, step=1000.0)
+entrada_EV = st.sidebar.number_input("Entrada (R$)", min_value=0.0, value=20000.0, step=1000.0)
+juros_fin_EV_pct = st.sidebar.slider("Juros financiamento EV (a.a.) [%]", 0.0, 30.0, 15.0, 0.1)
+prazo_fin_EV_anos = st.sidebar.slider("Prazo financiamento EV (anos)", 0, 15, 5, 1)
+
+
+inflacao_pct = st.sidebar.slider("Inflação (a.a.) [%]", 0.0, 20.0, 4.0, 0.1)
+juros_fin_pct = st.sidebar.slider("Juros financiamento solar (a.a.) [%]", 0.0, 30.0, 25.0, 0.1)
 prazo_fin_anos = st.sidebar.slider("Prazo do financiamento (anos)", 0, 15, 5, 1)
 
 # converter percentuais para decimais
@@ -37,14 +46,14 @@ inflacao_aa = inflacao_pct / 100
 juros_fin_aa = juros_fin_pct / 100
 
 st.sidebar.header("Custos Fixos Mensais dos Veículos (R$)")
-manutencao_ICE_mes = st.sidebar.number_input("Manutenção ICE (R$/mês)", min_value=0.0, value=300.0, step=50.0)
-seguro_ICE_mes = st.sidebar.number_input("Seguro ICE (R$/mês)", min_value=0.0, value=250.0, step=50.0)
+manutencao_ICE_mes = st.sidebar.number_input("Manutenção veículo a gasolina (R$/mês)", min_value=0.0, value=300.0, step=50.0)
+seguro_ICE_mes = st.sidebar.number_input("Seguro veículo a gasolina (R$/mês)", min_value=0.0, value=250.0, step=50.0)
 
-manutencao_EV_mes = st.sidebar.number_input("Manutenção EV (R$/mês)", min_value=0.0, value=150.0, step=50.0)
-seguro_EV_mes = st.sidebar.number_input("Seguro EV (R$/mês)", min_value=0.0, value=200.0, step=50.0)
+manutencao_EV_mes = st.sidebar.number_input("Manutenção veículo elétrico (R$/mês)", min_value=0.0, value=150.0, step=50.0)
+seguro_EV_mes = st.sidebar.number_input("Seguro veículo elétrico (R$/mês)", min_value=0.0, value=200.0, step=50.0)
 
 
-st.sidebar.header("CAPEX do Sistema Solar para o EV")
+st.sidebar.header("CAPEX do Sistema Solar para o veículo elétrico")
 # Primeiro precisamos calcular o kWp necessário com base nas entradas atuais
 kWh_mes_EV_base = (km_mes / eficiencia_EV) * (1 + perdas_pct/100)
 kWp_solar_necessario = (kWh_mes_EV_base * 12) / producao_kWh_kWp_ano if usar_solar else 0.0
@@ -54,14 +63,14 @@ modo_capex = st.sidebar.radio("Como informar o CAPEX?", ["Direto (R$)", "Custo p
 if modo_capex == "Direto (R$)":
     CAPEX_solar_EV = st.sidebar.number_input("CAPEX_solar_EV (R$)", min_value=0.0, value=float(round(kWp_solar_necessario*4500, -2)), step=100.0, help="Se usar solar, valor total do sistema dedicado ao EV.")
 else:
-    custo_kWp = st.sidebar.number_input("Custo por kWp (R$/kWp)", min_value=0.0, value=4500.0, step=100.0)
+    custo_kWp = st.sidebar.number_input("Custo por kWp (R$/kWp)", min_value=0.0, value=3032.0, step=100.0)
     CAPEX_solar_EV = custo_kWp * kWp_solar_necessario if usar_solar else 0.0
     st.sidebar.caption(f"CAPEX estimado: R$ {CAPEX_solar_EV:,.2f}")
 
 # -----------------------------
 # Cálculos — mês 0 (base) e parâmetros
 # -----------------------------
-# ICE base (mês 1 sem inflação aplicada ainda)
+# VG base (mês 1 sem inflação aplicada ainda)
 combustivel_ICE_RS_base = (km_mes / consumo_ICE) * preco_gasolina
 total_ICE_RS_base = combustivel_ICE_RS_base
 
@@ -77,7 +86,13 @@ def taxa_mensal_da_anual(t_anual):
 inflacao_am = taxa_mensal_da_anual(inflacao_aa)
 juros_fin_am = taxa_mensal_da_anual(juros_fin_aa)
 
-# Financiamento Price (se houver CAPEX e prazo > 0)
+juros_fin_EV_aa = juros_fin_EV_pct / 100
+juros_fin_EV_am = taxa_mensal_da_anual(juros_fin_EV_aa)
+n_meses_EV = prazo_fin_EV_anos * 12
+valor_financiado_EV = CAPEX_EV - entrada_EV
+
+
+# Financiamento Price da energia solar (se houver CAPEX e prazo > 0)
 n_meses = prazo_fin_anos * 12
 if usar_solar and CAPEX_solar_EV > 0 and n_meses > 0 and juros_fin_am > -1:
     if juros_fin_am == 0:
@@ -86,6 +101,15 @@ if usar_solar and CAPEX_solar_EV > 0 and n_meses > 0 and juros_fin_am > -1:
         parcela_fin = CAPEX_solar_EV * (juros_fin_am) / (1 - (1 + juros_fin_am) ** (-n_meses))
 else:
     parcela_fin = 0.0
+    
+if valor_financiado_EV > 0 and n_meses_EV > 0 and juros_fin_EV_am > -1:
+    if juros_fin_EV_am == 0:
+        parcela_fin_EV = valor_financiado_EV / n_meses_EV
+    else:
+        parcela_fin_EV = valor_financiado_EV * (juros_fin_EV_am) / (1 - (1 + juros_fin_EV_am) ** (-n_meses_EV))
+else:
+    parcela_fin_EV = 0.0
+    
 
 # O&M: 1% a.a. do CAPEX, distribuído por mês e corrigido por inflação mensal
 oem_base_mensal = (0.01 * CAPEX_solar_EV) / 12 if usar_solar and CAPEX_solar_EV > 0 else 0.0
@@ -99,25 +123,25 @@ economia_acumulada = 0.0
 economia_acumulada_5anos = 0.0
 
 for m in range(1, meses_total + 1):
-    # Fatores de inflação acumulada até o mês m (mês 1 = fator 1.0)
     fator_inf = (1 + inflacao_am) ** (m - 1)
 
-    # Custos ICE e EV-rede com inflação
+    # Custo ICE
     custo_ICE = (total_ICE_RS_base * fator_inf) + (manutencao_ICE_mes + seguro_ICE_mes) * fator_inf
+
+    # Custo EV rede (sem solar)
     custo_EV_rede = (total_EV_RS_rede_base * fator_inf) + (manutencao_EV_mes + seguro_EV_mes) * fator_inf
-    
+    parcela_EV = parcela_fin_EV if (m <= n_meses_EV) else 0.0
+
     if usar_solar:
-        # EV com solar: custo é parcela do financiamento (enquanto durar) + O&M inflacionado + manutenção + seguro
         parcela = parcela_fin if (m <= n_meses) else 0.0
         oem_mes = oem_base_mensal * fator_inf
-        custo_EV = parcela + oem_mes + (manutencao_EV_mes + seguro_EV_mes) * fator_inf
+        custo_EV = parcela_EV + parcela + oem_mes + (manutencao_EV_mes + seguro_EV_mes) * fator_inf
     else:
-        # EV sem solar: custo de energia da rede (inflacionado) + manutenção + seguro
-        custo_EV = custo_EV_rede
+        custo_EV = parcela_EV + custo_EV_rede
 
+    # Economia
     economia_mensal = custo_ICE - custo_EV
     economia_acumulada += economia_mensal
-
     if m <= 60:
         economia_acumulada_5anos += economia_mensal
 
@@ -129,28 +153,33 @@ for m in range(1, meses_total + 1):
         economia_acumulada,
         parcela if usar_solar else 0.0,
         (oem_base_mensal * fator_inf) if usar_solar else 0.0,
-        fator_inf
+        fator_inf,
+        parcela_EV
     ])
 
+
+
 df = pd.DataFrame(dados, columns=[
-    "Mês", "Custo ICE (R$)", "Custo EV (R$)", "Economia Mensal (R$)", 
-    "Economia Acumulada (R$)", "Parcela Fin (R$)", "O&M (R$)", "Fator Inflação"
+    "Mês", "Custo VG (R$)", "Custo VE (R$)", "Economia Mensal (R$)", 
+    "Economia Acumulada (R$)", "Parcela Solar (R$)", "O&M (R$)", 
+    "Fator Inflação", "Parcela EV (R$)"
 ])
+
 
 # -----------------------------
 # Resultados principais (mês atual e indicadores)
 # -----------------------------
-st.subheader("📊 Resultados — Destaques")
+st.subheader("📊 Resultados")
 
 col1, col2, col3, col4 = st.columns(4)
-col1.metric("Custo mensal ICE hoje (R$)", f"{total_ICE_RS_base:,.2f}")
+col1.metric("Custo mensal VG hoje (R$)", f"{total_ICE_RS_base:,.2f}")
 if usar_solar:
     # Considera mês 1: parcela + O&M base (sem inflação acumulada)
-    col2.metric("Custo mensal EV c/ Solar hoje (R$)", f"{(parcela_fin if n_meses>0 else 0) + oem_base_mensal:,.2f}")
+    col2.metric("Custo mensal VE c/ Solar hoje (R$)", f"{(parcela_fin if n_meses>0 else 0) + oem_base_mensal:,.2f}")
 else:
-    col2.metric("Custo mensal EV s/ Solar hoje (R$)", f"{total_EV_RS_rede_base:,.2f}")
+    col2.metric("Custo mensal VE s/ Solar hoje (R$)", f"{total_EV_RS_rede_base:,.2f}")
 
-col3.metric("Consumo EV (kWh/mês)", f"{kWh_mes_EV:,.1f}")
+col3.metric("Consumo VE (kWh/mês)", f"{kWh_mes_EV:,.1f}")
 col4.metric("kWp Solar necessário", f"{kWp_solar_necessario:,.2f}")
 
 st.subheader("💡 Indicadores do Sistema Solar")
@@ -171,6 +200,19 @@ else:
     col5.metric("Sistema Solar", "Não utilizado")
     col6.metric("Financiamento", "-")
 
+st.subheader("💰 Financiamento do veículo elétrico")
+
+col7, col8 = st.columns(2)
+col7.metric("Valor financiado EV (R$)", f"{valor_financiado_EV:,.2f}")
+if n_meses_EV > 0:
+    col8.metric(
+        "Parcela financiamento EV (R$)",
+        f"{parcela_fin_EV:,.2f}",
+        f"{n_meses_EV} meses | {juros_fin_EV_pct:.1f}% a.a."
+    )
+else:
+    col8.metric("Financiamento EV", "Sem financiamento")
+
 
 st.success(f"🏆 Economia acumulada em 5 anos: R$ {economia_acumulada_5anos:,.2f}")
 
@@ -181,8 +223,8 @@ st.success(f"🏆 Economia acumulada em 5 anos: R$ {economia_acumulada_5anos:,.2
 st.subheader("📈 Gráficos comparativos")
 
 fig1 = px.line(
-    df, x="Mês", y=["Custo ICE (R$)", "Custo EV (R$)"], 
-    title="Custo mensal — ICE vs EV (com/sem Solar) ao longo de 25 anos"
+    df, x="Mês", y=["Custo VG (R$)", "Custo VE (R$)"], 
+    title="Custo mensal — VG vs VE (com/sem Solar) ao longo de 25 anos"
 )
 st.plotly_chart(fig1, use_container_width=True)
 
