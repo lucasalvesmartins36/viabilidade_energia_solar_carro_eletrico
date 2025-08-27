@@ -182,7 +182,9 @@ else:
 col3.metric("Consumo VE (kWh/mês)", f"{kWh_mes_EV:,.1f}")
 col4.metric("kWp Solar necessário", f"{kWp_solar_necessario:,.2f}")
 
-st.subheader("💡 Indicadores do Sistema Solar")
+
+st.subheader("☀️ Indicadores do Sistema Solar ")
+
 
 col5, col6 = st.columns(2)
 
@@ -200,7 +202,8 @@ else:
     col5.metric("Sistema Solar", "Não utilizado")
     col6.metric("Financiamento", "-")
 
-st.subheader("💰 Financiamento do veículo elétrico")
+st.subheader("🔋 Financiamento do veículo elétrico")
+
 
 col7, col8 = st.columns(2)
 col7.metric("Valor financiado EV (R$)", f"{valor_financiado_EV:,.2f}")
@@ -214,7 +217,16 @@ else:
     col8.metric("Financiamento EV", "Sem financiamento")
 
 
-st.success(f"🏆 Economia acumulada em 5 anos: R$ {economia_acumulada_5anos:,.2f}")
+#st.success(f"🏆 Economia acumulada em 5 anos: R$ {economia_acumulada_5anos:,.2f}")
+
+st.markdown(
+    f"""
+    <div style="background-color:#d4edda; padding:15px; border-radius:8px">
+        <h2 style="color:#155724; font-size:32px;">🏆 Economia acumulada em 5 anos: R$ {economia_acumulada_5anos:,.2f}</h2>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 
 
 # -----------------------------
