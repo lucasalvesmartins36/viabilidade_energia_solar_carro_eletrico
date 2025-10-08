@@ -2,4 +2,3 @@ streamlit
 pandas
 plotly.express
 numpy
-urllib.parse
