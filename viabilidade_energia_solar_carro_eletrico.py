@@ -10,7 +10,7 @@ from urllib.parse import quote_plus  # montar o link do WhatsApp
 st.set_page_config(page_title="Simulador veículo elétrico + Energia Solar", layout="wide")
 
 st.title("🚗⚡ Simulador Veículo Elétrico + Energia Solar")
-st.write("Compare custos de um veículo a gasolina (VG) com veículo elétrico (VE) com ou sem energia solar, considerando financiamento, O&M e inflação.")
+st.write("Compare custos de um veículo a gasolina (VG) com veículo elétrico (VE) com ou sem energia solar, considerando financiamento, manutenção e inflação. Clique em >> no canto superior esquerdo para preencher seus dados")
 
 # -----------------------------
 # Entradas do usuário
