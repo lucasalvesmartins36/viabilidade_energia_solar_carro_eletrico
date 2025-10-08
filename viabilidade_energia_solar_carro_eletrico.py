@@ -17,7 +17,7 @@ st.write("Compare custos de um veículo a gasolina (VG) com veículo elétrico (
 # -----------------------------
 st.sidebar.header("Parâmetros de Entrada — Uso e Preços Atuais")
 
-km_mes = st.sidebar.slider("Km rodados por mês", 500, 5000, 1300, 100)
+km_mes = st.sidebar.slider("Km rodados por mês", 500, 6000, 1300, 100)
 preco_gasolina = st.sidebar.slider("Preço da gasolina hoje (R$/L)", 4.0, 10.0, 6.4, 0.1)
 consumo_ICE = st.sidebar.slider("Consumo veículo a gasolina (km/L)", 5.0, 20.0, 12.0, 0.5)
 
